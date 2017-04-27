@@ -30,7 +30,7 @@ class Window(QtGui.QWidget):
 
         self.sliderList = [self.slider1, self.slider2, self.slider3, self.slider4, self.slider5, self.slider6]
 
-        for slider in len(self.sliderList):
+        for slider in self.sliderList:
             slider.setFixedSize(500, 60)
             slider.setStyleSheet(self.styles.stylesheet())
             slider.move(20, 180)
