@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import serial, os, sys
 from PyQt4 import QtGui
-from PyQt4.QtCore import QString, QThread
+from PyQt4.QtCore import QString, QThread, pyqtSignal
 
 class Window(QtGui.QWidget):
     def __init__(self):
@@ -11,15 +11,29 @@ class Window(QtGui.QWidget):
         self.setFixedSize(600, 300)
         self.setStyleSheet("background-color: black;")
 
+        self.chan1 = QString()
+        self.chan2 = QString()
+        self.chan3 = QString()
+        self.chan4 = QString()
+        self.chan5 = QString()
+        self.chan6 = QString()
+        self.temp1 = QString()
+
         self.styles = styles()
-        self.warp1_slider = QtGui.QSlider(1, self)
-        self.warp1_slider.setFixedSize(500, 60)
-        self.warp1_slider.sliderMoved.connect(self.calc_slider1)
-        self.warp1_slider.setStyleSheet(self.stylesheet())
-        self.warp1_slider.setMaximum(-4000)
-        self.warp1_slider.setMinimum(-8000)
-        self.warp1_slider.setValue(-5000)
-        self.warp1_slider.move(20, 180)
+
+        self.slider1 = QtGui.QSlider(1, self)
+        self.slider2 = QtGui.QSlider(1, self)
+        self.slider3 = QtGui.QSlider(1, self)
+        self.slider4 = QtGui.QSlider(1, self)
+        self.slider5 = QtGui.QSlider(1, self)
+        self.slider6 = QtGui.QSlider(1, self)
+
+        self.sliderList = [self.slider1, self.slider2, self.slider3, self.slider4, self.slider5, self.slider6]
+
+        for slider in len(self.sliderList):
+            slider.setFixedSize(500, 60)
+            slider.setStyleSheet(self.styles.stylesheet())
+            slider.move(20, 180)
 
         self.button = QtGui.QPushButton("OK", self)
         self.button.setStyleSheet(self.buttonstyle())
@@ -27,20 +41,37 @@ class Window(QtGui.QWidget):
         self.button.move(420, 80)
         self.button.clicked.connect(app.quit)
 
-        self.arrow = QtGui.QPushButton(self)
-        self.arrow.setStyleSheet(self.arrowstyle())
-        self.arrow.setFixedSize(55, 100)
-        self.arrow.move(50, 30)
-
         self.label = QtGui.QLabel("", self)
         self.label.setStyleSheet("color: white;")
         self.label.setFixedSize(600, 50)
         self.label.move(30, 30)
 
-        self.label.setText(os.getcwd())
+        # self.label.setText(os.getcwd()) # For debugging // May not need
 
         self.show()
         self.raise_()
+
+class usbThread(QThread):
+
+    channel1 = pyqtSignal(str)
+    channel2 = pyqtSignal(str)
+    channel3 = pyqtSignal(str)
+    channel4 = pyqtSignal(str)
+    channel5 = pyqtSignal(str)
+    channel6 = pyqtSignal(str)
+    temp1 = pyqtSignal(str)
+
+    def __init__(self, parent):
+        QThread.__init__(self, parent=None)
+        self.name = "NanoThread"
+
+    def run(self):
+        while int(self.board_connected) == 1:
+            self.parseData()
+
+    def parseData(self):
+        print "parsing"
+        ## needs more CODE~!!
 
 
 
@@ -94,19 +125,6 @@ class styles():
                     border-style: inset;
                 }
             """
-
-    def arrowstyle(self):
-
-        return """
-            QPushButton {
-                background-image: url(Resources/arrowLeft_normal.jpg);
-                border-style: inset;
-            }
-            QPushButton::pressed {
-                border-style: inset;
-                image: url(Resources/arrowLeft_pressed.jpg);
-            }
-        """
 
 app = QtGui.QApplication(sys.argv)
 window = Window()
