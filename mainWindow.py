@@ -8,8 +8,9 @@ class Window(QtGui.QWidget):
         QtGui.QWidget.__init__(self)
         os.chdir(str(os.path.dirname(os.path.abspath(sys.argv[0]))))
         os.chdir("..")
-        self.setFixedSize(800, 700)
+        self.setFixedSize(650, 700)
         self.setStyleSheet("background-color: black;")
+        self.setWindowTitle("IceBoard Fan Controller")
         self.styles = styles()
 
         self.slider1 = QtGui.QSlider(1, self)
@@ -25,16 +26,28 @@ class Window(QtGui.QWidget):
         self.speed5 = QtGui.QLabel("100%", self)
         self.speed6 = QtGui.QLabel("100%", self)
 
+        self.chan1 = QtGui.QLabel("Channel 1", self)
+        self.chan2 = QtGui.QLabel("Channel 2", self)
+        self.chan3 = QtGui.QLabel("Channel 3", self)
+        self.chan4 = QtGui.QLabel("Channel 4", self)
+        self.chan5 = QtGui.QLabel("Channel 5", self)
+        self.chan6 = QtGui.QLabel("Channel 6", self)
+
         self.sliderList = [self.slider1, self.slider2, self.slider3, self.slider4, self.slider5, self.slider6]
         self.speedList = [self.speed1, self.speed2, self.speed3, self.speed4, self.speed5, self.speed6]
-
-        label_Y = 20
+        self.chanList = [self.chan1, self.chan2, self.chan3, self.chan4, self.chan5, self.chan6]
+        chanY = 60
+        for channel in self.chanList:
+            channel.setStyleSheet("color: white; font-size 20px;")
+            channel.move(30, chanY)
+            chanY+=100
+        label_Y = 100
         for label in self.speedList:
-            label.setStyleSheet("color: white;")
+            label.setStyleSheet("color: white; font-size: 25px; font-style: italic")
             label.move(560, label_Y)
             label_Y+=100
 
-        x, y = 40, 20
+        x, y = 40, 80
         for slider in self.sliderList:
             slider.setFixedSize(500, 60)
             slider.setStyleSheet(self.styles.stylesheet())
@@ -43,6 +56,11 @@ class Window(QtGui.QWidget):
             slider.move(x, y)
             slider.setValue(255)
             y+=100
+
+        self.titlelabel = QtGui.QLabel("IceBoard Fan Controller", self)
+        self.titlelabel.setFixedSize(300, 40)
+        self.titlelabel.move(20, 10)
+        self.titlelabel.setStyleSheet("font-size: 25px; color: white; font-style: italic;")
 
         self.label = QtGui.QLabel("", self)
         self.label.setFixedSize(20, 20)
@@ -115,24 +133,35 @@ class usbThread(QThread):
                         self.status.emit("background-color: green;")
             except StandardError as msg:
                 self.status.emit("background-color: red;")
+                print "no IceBoard Found"
 
         if platform.system() == "Darwin":
+            x = 0
             try:
                 for device in os.listdir('/dev/'):
                     if "wchusbserial" in device:
                         serial_address = "/dev/"+str(device)
                         self.board_connected = 1
-                        self.status.emit("background-color: green;")
+                        x +=1
+                if x > 0:
+                    self.status.emit("background-color: green;")
+
             except StandardError as msg:
-                self.status.emit("background-color: red;")
+                print "no iceboard :("
 
         if serial_address != "":
             self.serial = serial.Serial(serial_address, 9600)
+        else:
+            self.board_connected = 0
+            self.status.emit("background-color: red;")
+            self.status_message.emit("No Ice Board Connected")
 
     def run(self):
         while int(self.board_connected) == 1:
             self.parseData()
             self.status.emit("background-color: lime; border-radius: 5;")
+        else:
+            self.status_message.emit("no Board")
 
     def parseData(self):
         data = self.serial.read_until("\n")
@@ -169,11 +198,11 @@ class styles():
                 }
                 QSlider::handle:horizontal {
                     background: #000;
-                    width: 35px;
+                    width: 20px;
                     border: 2px solid white;
                     margin-top: 0px;
                     margin-bottom: 0px;
-                    border-radius: 0px;
+                    border-radius: 8px;
                 }
             """
 
