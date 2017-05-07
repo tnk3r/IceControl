@@ -30,6 +30,7 @@ class Window(QtGui.QWidget):
 
         label_Y = 20
         for label in self.speedList:
+            label.setStyleSheet("color: white;")
             label.move(560, label_Y)
             label_Y+=100
 
@@ -48,6 +49,7 @@ class Window(QtGui.QWidget):
         self.label.move(30, 650)
 
         self.status_label = QtGui.QLabel("", self)
+        self.status_label.setStyleSheet("color: white;")
         self.status_label.setFixedSize(200, 30)
         self.status_label.move(60, 655)
 
@@ -113,6 +115,17 @@ class usbThread(QThread):
                         self.status.emit("background-color: green;")
             except StandardError as msg:
                 self.status.emit("background-color: red;")
+
+        if platform.system() == "Darwin":
+            try:
+                for device in os.listdir('/dev/'):
+                    if "wchusbserial" in device:
+                        serial_address = "/dev/"+str(device)
+                        self.board_connected = 1
+                        self.status.emit("background-color: green;")
+            except StandardError as msg:
+                self.status.emit("background-color: red;")
+
         if serial_address != "":
             self.serial = serial.Serial(serial_address, 9600)
 
