@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import serial, os, sys, platform
 from PyQt4 import QtGui
-from PyQt4.QtCore import QString, QThread, pyqtSignal
+from PyQt4.QtCore import QThread, pyqtSignal
 
 class Window(QtGui.QWidget):
     def __init__(self):
@@ -10,15 +10,6 @@ class Window(QtGui.QWidget):
         os.chdir("..")
         self.setFixedSize(800, 700)
         self.setStyleSheet("background-color: black;")
-
-        self.chan1 = QString()
-        self.chan2 = QString()
-        self.chan3 = QString()
-        self.chan4 = QString()
-        self.chan5 = QString()
-        self.chan6 = QString()
-        self.temp1 = QString()
-
         self.styles = styles()
 
         self.slider1 = QtGui.QSlider(1, self)
@@ -52,12 +43,6 @@ class Window(QtGui.QWidget):
             slider.setValue(255)
             y+=100
 
-        # self.button = QtGui.QPushButton("OK", self)
-        # self.button.setStyleSheet(self.styles.buttonstyle())
-        # self.button.setFixedSize(100, 60)
-        # self.button.move(600, 600)
-        # self.button.clicked.connect(app.quit)
-
         self.label = QtGui.QLabel("", self)
         self.label.setFixedSize(20, 20)
         self.label.move(30, 650)
@@ -65,7 +50,6 @@ class Window(QtGui.QWidget):
         self.status_label = QtGui.QLabel("", self)
         self.status_label.setFixedSize(200, 30)
         self.status_label.move(60, 655)
-
 
         # self.label.setText(os.getcwd()) # For debugging // May not need
 
@@ -111,12 +95,6 @@ class Window(QtGui.QWidget):
 
 class usbThread(QThread):
 
-    channel1 = pyqtSignal(str)
-    channel2 = pyqtSignal(str)
-    channel3 = pyqtSignal(str)
-    channel4 = pyqtSignal(str)
-    channel5 = pyqtSignal(str)
-    channel6 = pyqtSignal(str)
     temp1 = pyqtSignal(str)
     status = pyqtSignal(str)
     status_message = pyqtSignal(str)
@@ -143,19 +121,15 @@ class usbThread(QThread):
             self.parseData()
             self.status.emit("background-color: lime; border-radius: 5;")
 
-
     def parseData(self):
         data = self.serial.read_until("\n")
         if "rv" in data:
             self.status_message.emit(str(data))
         print data
 
-        ## needs more CODE~!!
-
     def sendCommand(self, command):
         if len(command) <= 4:
             self.serial.write(str(command))
-
 
 class styles():
 
