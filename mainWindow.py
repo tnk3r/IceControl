@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import serial, os, sys, platform
+import serial, os, sys, platform, time
 from PyQt4 import QtGui
 from PyQt4.QtCore import QThread, pyqtSignal
 
@@ -9,7 +9,7 @@ class Window(QtGui.QWidget):
         os.chdir(str(os.path.dirname(os.path.abspath(sys.argv[0]))))
         os.chdir("..")
         self.setFixedSize(650, 700)
-        self.setStyleSheet("background-color: black;")
+        self.setStyleSheet("background-color: black; border-color: white")
         self.setWindowTitle("IceBoard Fan Controller")
         self.styles = styles()
 
@@ -64,12 +64,17 @@ class Window(QtGui.QWidget):
 
         self.label = QtGui.QLabel("", self)
         self.label.setFixedSize(20, 20)
+        self.label.setStyleSheet("background-color: red; border-radius: 8px;")
         self.label.move(30, 650)
 
-        self.status_label = QtGui.QLabel("", self)
+        self.status_label = QtGui.QLabel("IceBoard Disconnected", self)
         self.status_label.setStyleSheet("color: white;")
         self.status_label.setFixedSize(200, 30)
-        self.status_label.move(60, 655)
+        self.status_label.move(60, 650)
+
+        # self.setAll100 = QtGui.QPushButton("Set All 100%", self)
+        # self.setAll100.move(500, 30)
+        # self.setAll100.setStyleSheet(self.styles.buttonstyle(25, "white"))
 
         # self.label.setText(os.getcwd()) # For debugging // May not need
 
@@ -124,16 +129,18 @@ class usbThread(QThread):
         self.name = "NanoThread"
         self.board_connected = 0
         serial_address = ""
+
+    def serial_setup(self):
         if platform.system() == "Linux":
             try:
                 for device in os.listdir('/dev/'):
                     if "ttyUSB" in device:
                         serial_address = "/dev/"+str(device)
                         self.board_connected = 1
-                        self.status.emit("background-color: green;")
+                        self.status.emit("background-color: lime; border-radius: 8px;")
             except StandardError as msg:
-                self.status.emit("background-color: red;")
-                print "no IceBoard Found"
+                self.status.emit("background-color: red; border-radius: 8px;")
+                self.status_message.emit("No Ice Board Connected")
 
         if platform.system() == "Darwin":
             x = 0
@@ -144,29 +151,38 @@ class usbThread(QThread):
                         self.board_connected = 1
                         x +=1
                 if x > 0:
-                    self.status.emit("background-color: green;")
+                    self.status.emit("background-color: lime; border-radius: 8px;")
 
             except StandardError as msg:
                 print "no iceboard :("
 
-        if serial_address != "":
-            self.serial = serial.Serial(serial_address, 9600)
-        else:
+        try:
+            if serial_address != "":
+                self.serial = serial.Serial(serial_address, 9600)
+        except StandardError as msg:
             self.board_connected = 0
-            self.status.emit("background-color: red;")
+            self.status.emit("background-color: red; border-radius: 8px")
             self.status_message.emit("No Ice Board Connected")
+            time.sleep(2)
 
     def run(self):
-        while int(self.board_connected) == 1:
-            self.parseData()
-            self.status.emit("background-color: lime; border-radius: 5;")
-        else:
-            self.status_message.emit("no Board")
+        while True:
+            if int(self.board_connected) == 1:
+                try:
+                    self.parseData()
+                    self.status.emit("background-color: lime; border-radius: 8;")
+                except StandardError as msg:
+                    self.status.emit("background-color: red; border-radius: 8;")
+                    self.status_message.emit("No Ice Board Connected")
+                    self.board_connected = 0
+            else:
+                self.serial_setup()
+            time.sleep(0.3)
 
     def parseData(self):
         data = self.serial.read_until("\n")
         if "rv" in data:
-            self.status_message.emit(str(data))
+            self.status_message.emit(str(data).strip()+ ": Connected! ")
         print data
 
     def sendCommand(self, command):
@@ -206,16 +222,16 @@ class styles():
                 }
             """
 
-    def buttonstyle(self):
+    def buttonstyle(self, size, color):
         return """
                 QPushButton {
-                    color: white;
+                    color:"""+str(color)+""";
                     background-color: rgb(50, 50, 50);
                     border-style: solid;
                     border-width: 2px;
                     border-radius: 5px;
                     border-color: white;
-                    font: bold 35px;
+                    font:"""+str(size)+"""px;
                     font-style: italic;
                 }
                 QPushButton::pressed {
