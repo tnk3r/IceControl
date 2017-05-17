@@ -131,8 +131,13 @@ class usbThread(QThread):
         serial_address = ""
 
     def serial_setup(self):
+        #need to test on Windows 10
+        if platform.system() == "Cygwin":
+            self.status_message.emit("No Ice Board Connected")
+
         if platform.system() == "Linux":
             try:
+                # better Linux Detection
                 for device in os.listdir('/dev/'):
                     if "ttyUSB" in device:
                         serial_address = "/dev/"+str(device)
@@ -145,6 +150,7 @@ class usbThread(QThread):
         if platform.system() == "Darwin":
             x = 0
             try:
+                # hopefully nobody connects a bunch of chinese nanos together.
                 for device in os.listdir('/dev/'):
                     if "wchusbserial" in device:
                         serial_address = "/dev/"+str(device)
@@ -182,7 +188,7 @@ class usbThread(QThread):
     def parseData(self):
         data = self.serial.read_until("\n")
         if "rv" in data:
-            self.status_message.emit(str(data).strip()+ ": Connected! ")
+            self.status_message.emit(str(data).strip()+": Connected! ")
         print data
 
     def sendCommand(self, command):
@@ -239,6 +245,7 @@ class styles():
                     border-style: inset;
                 }
             """
+
 
 app = QtGui.QApplication(sys.argv)
 window = Window()
