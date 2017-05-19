@@ -11,7 +11,7 @@ class aboutWindow(QtGui.QWidget):
         QtGui.QWidget.__init__(self)
         self.setFixedSize(400, 150)
         self.move(600, 300)
-        self.defaultText = "\tIceControl Version .45\n\n\t  tink3r (AlexCarr)"
+        self.defaultText = "\tIceControl Version .55\n\n\t  tink3r (AlexCarr)"
 
         self.textLabel = QtGui.QLabel(self.defaultText, self)
         self.textLabel.move(85, 30)
@@ -104,6 +104,11 @@ class Window(QtGui.QMainWindow):
             slider.move(x, y)
             slider.setValue(255)
             y+=100
+
+        # self.setFullButton = QtGui.QPushButton("set Full", self)
+        # self.setFullButton.move(550, 30)
+        # self.setFullButton.setStyleSheet(self.styles.buttonstyle(20, "white"))
+        # self.setFullButton.clicked.connect(self.setAllFull)
 
         self.tinklabel = QtGui.QLabel(".tink3r", self)
         self.tinklabel.move(550, 670)
@@ -201,6 +206,11 @@ class Window(QtGui.QMainWindow):
             self.speed6.setText(str(int(self.slider6.value()*.3952))+"%")
         except StandardError as msg:
             self.openAlert("NO IceBoard Found!")
+
+    def setAllFull(self):
+        for d in range(6):
+            self.usbThread.sendCommand(str((d*1000)+255)+"\n")
+            time.sleep(0.5)
 
 
 class usbThread(QThread):
