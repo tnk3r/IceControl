@@ -5,7 +5,9 @@ from PyQt4 import QtGui
 from PyQt4.QtCore import QThread, pyqtSignal
 
 class aboutWindow(QtGui.QWidget):
+
     def __init__(self):
+
         QtGui.QWidget.__init__(self)
         self.setFixedSize(400, 150)
         self.move(600, 300)
@@ -33,6 +35,7 @@ class aboutWindow(QtGui.QWidget):
         self.raise_()
 
 class Window(QtGui.QMainWindow):
+
     def __init__(self):
         QtGui.QMainWindow.__init__(self)
         os.chdir(str(os.path.dirname(os.path.abspath(sys.argv[0]))))
@@ -79,18 +82,20 @@ class Window(QtGui.QMainWindow):
         self.sliderList = [self.slider1, self.slider2, self.slider3, self.slider4, self.slider5, self.slider6]
         self.speedList = [self.speed1, self.speed2, self.speed3, self.speed4, self.speed5, self.speed6]
         self.chanList = [self.chan1, self.chan2, self.chan3, self.chan4, self.chan5, self.chan6]
-        chanY = 50
+
+        x, y = 40, 80
+        chanY, label_Y = 50, 100
+
         for channel in self.chanList:
             channel.setStyleSheet("color: white; font-size 20px;")
             channel.move(30, chanY)
             chanY+=100
-        label_Y = 100
+
         for label in self.speedList:
             label.setStyleSheet("color: white; font-size: 25px; font-style: italic")
             label.move(560, label_Y)
             label_Y+=100
 
-        x, y = 40, 80
         for slider in self.sliderList:
             slider.setFixedSize(500, 60)
             slider.setStyleSheet(self.styles.stylesheet())
@@ -100,10 +105,14 @@ class Window(QtGui.QMainWindow):
             slider.setValue(255)
             y+=100
 
+        self.tinklabel = QtGui.QLabel(".tink3r", self)
+        self.tinklabel.move(550, 670)
+        self.tinklabel.setStyleSheet("font-size: 15px; color:rgb(50,50,50); font-style: italic;")
+
         self.titlelabel = QtGui.QLabel("IceBoard Fan Controller", self)
         self.titlelabel.setFixedSize(300, 40)
         self.titlelabel.move(20, 10)
-        self.titlelabel.setStyleSheet("font-size: 25px; color: white; font-style: italic;")
+        self.titlelabel.setStyleSheet("font-size: 25px; color: rgb(250,250,250); font-style: italic;")
 
         self.label = QtGui.QLabel("", self)
         self.label.setFixedSize(20, 20)
@@ -139,7 +148,6 @@ class Window(QtGui.QMainWindow):
         self.usbThread.value4.connect(self.speed4.setText)
         self.usbThread.value5.connect(self.speed5.setText)
         self.usbThread.value6.connect(self.speed6.setText)
-
 
         self.show()
         self.raise_()
@@ -280,11 +288,10 @@ class usbThread(QThread):
 
     def parseData(self):
         data = self.serial.read_until("\n").strip()
+        print data
         if "rv" in data:
             self.status_message.emit(str(data).strip()+": Connected! ")
         if len(data) == 4:
-            print "Channel: "+str(data)[0]+" set at "+str(data)[1:4]
-            print int(str(data)[0]) - 1
             self.sliderSignals[int(str(data)[0]) - 1].emit(int(str(data)[1:4]))
             self.values[int(str(data)[0]) - 1].emit(str(int(round(int(str(data)[1:4])*.394)))+"%")
 
