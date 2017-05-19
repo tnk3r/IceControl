@@ -1,17 +1,60 @@
 #!/usr/bin/python
+
 import serial, os, sys, platform, time
 from PyQt4 import QtGui
 from PyQt4.QtCore import QThread, pyqtSignal
 
-class Window(QtGui.QWidget):
+class aboutWindow(QtGui.QWidget):
     def __init__(self):
         QtGui.QWidget.__init__(self)
+        self.setFixedSize(400, 150)
+        self.move(600, 300)
+        self.defaultText = "\tIceControl Version .45\n\n\t  tink3r (AlexCarr)"
+
+        self.textLabel = QtGui.QLabel(self.defaultText, self)
+        self.textLabel.move(85, 30)
+
+        self.okButton = QtGui.QPushButton("OK", self)
+        self.okButton.move(140, 100)
+        self.okButton.setFixedSize(100, 40)
+        self.okButton.clicked.connect(self.close)
+
+    def open(self):
+        self.textLabel.setText(self.defaultText)
+        self.show()
+        self.raise_()
+
+    def close(self):
+        self.hide()
+
+    def alert(self, message):
+        self.textLabel.setText(str(message))
+        self.show()
+        self.raise_()
+
+class Window(QtGui.QMainWindow):
+    def __init__(self):
+        QtGui.QMainWindow.__init__(self)
         os.chdir(str(os.path.dirname(os.path.abspath(sys.argv[0]))))
         os.chdir("..")
         self.setFixedSize(650, 700)
         self.setStyleSheet("background-color: black; border-color: white")
         self.setWindowTitle("IceBoard Fan Controller")
         self.styles = styles()
+        self.setWindowTitle("IceControl")
+
+        self.utilWindow = aboutWindow()
+
+        exitAction = QtGui.QAction('Exit', self)
+        exitAction.setShortcut('Ctrl+Q')
+        exitAction.triggered.connect(app.quit)
+        aboutAction = QtGui.QAction('About...', self)
+        aboutAction.triggered.connect(self.openAbout)
+
+        self.menubar = self.menuBar()
+        self.file_menu = self.menubar.addMenu("&File")
+        self.file_menu.addAction(exitAction)
+        self.file_menu.addAction(aboutAction)
 
         self.slider1 = QtGui.QSlider(1, self)
         self.slider2 = QtGui.QSlider(1, self)
@@ -36,7 +79,7 @@ class Window(QtGui.QWidget):
         self.sliderList = [self.slider1, self.slider2, self.slider3, self.slider4, self.slider5, self.slider6]
         self.speedList = [self.speed1, self.speed2, self.speed3, self.speed4, self.speed5, self.speed6]
         self.chanList = [self.chan1, self.chan2, self.chan3, self.chan4, self.chan5, self.chan6]
-        chanY = 60
+        chanY = 50
         for channel in self.chanList:
             channel.setStyleSheet("color: white; font-size 20px;")
             channel.move(30, chanY)
@@ -72,12 +115,6 @@ class Window(QtGui.QWidget):
         self.status_label.setFixedSize(200, 30)
         self.status_label.move(60, 650)
 
-        # self.setAll100 = QtGui.QPushButton("Set All 100%", self)
-        # self.setAll100.move(500, 30)
-        # self.setAll100.setStyleSheet(self.styles.buttonstyle(25, "white"))
-
-        # self.label.setText(os.getcwd()) # For debugging // May not need
-
         self.usbThread = usbThread(self)
         self.usbThread.start()
 
@@ -90,32 +127,72 @@ class Window(QtGui.QWidget):
 
         self.usbThread.status.connect(self.label.setStyleSheet)
         self.usbThread.status_message.connect(self.status_label.setText)
+        self.usbThread.slider1.connect(self.slider1.setValue)
+        self.usbThread.slider2.connect(self.slider2.setValue)
+        self.usbThread.slider3.connect(self.slider3.setValue)
+        self.usbThread.slider4.connect(self.slider4.setValue)
+        self.usbThread.slider5.connect(self.slider5.setValue)
+        self.usbThread.slider6.connect(self.slider6.setValue)
+        self.usbThread.value1.connect(self.speed1.setText)
+        self.usbThread.value2.connect(self.speed2.setText)
+        self.usbThread.value3.connect(self.speed3.setText)
+        self.usbThread.value4.connect(self.speed4.setText)
+        self.usbThread.value5.connect(self.speed5.setText)
+        self.usbThread.value6.connect(self.speed6.setText)
+
+
         self.show()
         self.raise_()
 
+    def openAbout(self):
+        self.utilWindow.move(self.geometry().x() + 100, self.geometry().y() + 20)
+        self.utilWindow.open()
+
+    def openAlert(self, message):
+        self.utilWindow.move(self.geometry().x() + 100, self.geometry().y() + 20)
+        self.utilWindow.alert(str(message))
+
     def setSlider1(self):
-        self.usbThread.sendCommand("1"+str(self.slider1.value()))
-        self.speed1.setText(str(int(self.slider1.value() *.3952))+"%")
+        try:
+            self.usbThread.sendCommand("1"+str(self.slider1.value()))
+            self.speed1.setText(str(int(self.slider1.value() *.3952))+"%")
+        except StandardError as msg:
+            self.openAlert("NO IceBoard Found!")
 
     def setSlider2(self):
-        self.usbThread.sendCommand("2"+str(self.slider2.value()))
-        self.speed2.setText(str(int(self.slider2.value()*.3952))+"%")
+        try:
+            self.usbThread.sendCommand("2"+str(self.slider2.value()))
+            self.speed2.setText(str(int(self.slider2.value()*.3952))+"%")
+        except StandardError as msg:
+            self.openAlert("NO IceBoard Found!")
 
     def setSlider3(self):
-        self.usbThread.sendCommand("3"+str(self.slider3.value()))
-        self.speed3.setText(str(int(self.slider3.value()*.3952))+"%")
+        try:
+            self.usbThread.sendCommand("3"+str(self.slider3.value()))
+            self.speed3.setText(str(int(self.slider3.value()*.3952))+"%")
+        except StandardError as msg:
+            self.openAlert("NO IceBoard Found!")
 
     def setSlider4(self):
-        self.usbThread.sendCommand("4"+str(self.slider4.value()))
-        self.speed4.setText(str(int(self.slider4.value()*.3952))+"%")
+        try:
+            self.usbThread.sendCommand("4"+str(self.slider4.value()))
+            self.speed4.setText(str(int(self.slider4.value()*.3952))+"%")
+        except StandardError as msg:
+            self.openAlert("NO IceBoard Found!")
 
     def setSlider5(self):
-        self.usbThread.sendCommand("5"+str(self.slider5.value()))
-        self.speed5.setText(str(int(self.slider5.value()*.3952))+"%")
+        try:
+            self.usbThread.sendCommand("5"+str(self.slider5.value()))
+            self.speed5.setText(str(int(self.slider5.value()*.3952))+"%")
+        except StandardError as msg:
+            self.openAlert("NO IceBoard Found!")
 
     def setSlider6(self):
-        self.usbThread.sendCommand("6"+str(self.slider6.value()))
-        self.speed6.setText(str(int(self.slider6.value()*.3952))+"%")
+        try:
+            self.usbThread.sendCommand("6"+str(self.slider6.value()))
+            self.speed6.setText(str(int(self.slider6.value()*.3952))+"%")
+        except StandardError as msg:
+            self.openAlert("NO IceBoard Found!")
 
 
 class usbThread(QThread):
@@ -123,12 +200,27 @@ class usbThread(QThread):
     temp1 = pyqtSignal(str)
     status = pyqtSignal(str)
     status_message = pyqtSignal(str)
+    slider1 = pyqtSignal(int)
+    slider2 = pyqtSignal(int)
+    slider3 = pyqtSignal(int)
+    slider4 = pyqtSignal(int)
+    slider5 = pyqtSignal(int)
+    slider6 = pyqtSignal(int)
+
+    value1 = pyqtSignal(str)
+    value2 = pyqtSignal(str)
+    value3 = pyqtSignal(str)
+    value4 = pyqtSignal(str)
+    value5 = pyqtSignal(str)
+    value6 = pyqtSignal(str)
 
     def __init__(self, parent):
         QThread.__init__(self, parent=None)
         self.name = "NanoThread"
         self.board_connected = 0
         serial_address = ""
+        self.sliderSignals = [self.slider1, self.slider2, self.slider3, self.slider4, self.slider5, self.slider6]
+        self.values = [self.value1, self.value2, self.value3, self.value4, self.value5, self.value6]
 
     def serial_setup(self):
         #need to test on Windows 10
@@ -178,6 +270,7 @@ class usbThread(QThread):
                     self.parseData()
                     self.status.emit("background-color: lime; border-radius: 8;")
                 except StandardError as msg:
+                    print str(msg)
                     self.status.emit("background-color: red; border-radius: 8;")
                     self.status_message.emit("No Ice Board Connected")
                     self.board_connected = 0
@@ -186,10 +279,14 @@ class usbThread(QThread):
             time.sleep(0.3)
 
     def parseData(self):
-        data = self.serial.read_until("\n")
+        data = self.serial.read_until("\n").strip()
         if "rv" in data:
             self.status_message.emit(str(data).strip()+": Connected! ")
-        print data
+        if len(data) == 4:
+            print "Channel: "+str(data)[0]+" set at "+str(data)[1:4]
+            print int(str(data)[0]) - 1
+            self.sliderSignals[int(str(data)[0]) - 1].emit(int(str(data)[1:4]))
+            self.values[int(str(data)[0]) - 1].emit(str(int(round(int(str(data)[1:4])*.394)))+"%")
 
     def sendCommand(self, command):
         if len(command) <= 4:
@@ -245,8 +342,6 @@ class styles():
                     border-style: inset;
                 }
             """
-
-
 app = QtGui.QApplication(sys.argv)
 window = Window()
 sys.exit(app.exec_())
