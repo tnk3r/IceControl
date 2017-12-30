@@ -4,25 +4,92 @@ import serial, os, sys, platform, time
 from PyQt4 import QtGui
 from PyQt4.QtCore import QThread, pyqtSignal
 
+def slider_style():
+    return """
+                QSlider::groove:horizontal {
+                    height: 50px;
+                    border: 0px solid #abc;
+                    }
+                QSlider::sub-page:horizontal {
+                    background: qlineargradient(x1: 0, y1: 0,    x2: 0, y2: 1,
+                        stop: 0 #333, stop: 1 #aaa);
+                    background: qlineargradient(x1: 0, y1: 0.2, x2: 1, y2: 1,
+                        stop: 0 #333, stop: 1 #aaa);
+                    height: 40px;
+                }
+                QSlider::add-page:horizontal {
+                    background: #222;
+                    border: 2px solid gray;
+                    height: 40px;
+                }
+                QSlider::handle:horizontal {
+                    background: #000;
+                    width: 20px;
+                    border: 2px solid white;
+                    margin-top: 0px;
+                    margin-bottom: 0px;
+                    border-radius: 8px;
+                }
+            """
+
+def buttonstyle(size, color):
+
+    return """
+                QPushButton {
+                    color:"""+str(color)+""";
+                    background-color: rgb(50, 50, 50);
+                    border-style: solid;
+                    border-width: 2px;
+                    border-radius: 5px;
+                    border-color: white;
+                    font:"""+str(size)+"""px;
+                    font-style: italic;
+                }
+                QPushButton::pressed {
+                    background-color: rgb(200, 200, 200);
+                    border-style: inset;
+                }
+            """
+
+def labelstyle(size, color):
+    return """
+                QLabel {
+                    color:"""+str(color)+""";
+                    background-color: rgb(0, 0, 0);
+                    font:"""+str(size)+"""px;
+                }
+            """
+
+class customQPushButton(QtGui.QPushButton):
+
+    def __init__(self, string, parent, x_move, y_move, x_size=100, y_size=40, stylesheet=buttonstyle(25, "white"), function=""):
+        QtGui.QPushButton.__init__(self, parent=parent)
+        self.setText(string)
+        self.setFixedSize(x_size, y_size)
+        self.move(x_move, y_move)
+        self.setStyleSheet(stylesheet)
+        if function != "": self.clicked.connect(function)
+
+class customQLabel(QtGui.QLabel):
+
+    def __init__(self, string, parent, x_move, y_move, x_size=80, y_size=30, stylesheet=labelstyle(25, "white")):
+        QtGui.QLabel.__init__(self, parent=parent)
+        self.setText(string)
+        self.setFixedSize(x_size, y_size)
+        self.move(x_move, y_move)
+        self.setStyleSheet(stylesheet)
+
+
 class aboutWindow(QtGui.QWidget):
 
     def __init__(self):
-
         QtGui.QWidget.__init__(self)
         self.setFixedSize(400, 150)
         self.move(600, 300)
         self.setStyleSheet("background-color: black; border-color: 5 px solid white")
         self.defaultText = "\tIceControl Version .75\n\n\t  tink3r (AlexCarr)"
-        self.styles = styles()
-        self.textLabel = QtGui.QLabel(self.defaultText, self)
-        self.textLabel.move(85, 30)
-        self.textLabel.setStyleSheet(self.styles.labelstyle(20, "white"))
-
-        self.okButton = QtGui.QPushButton("OK", self)
-        self.okButton.setStyleSheet(self.styles.buttonstyle(25, "white"))
-        self.okButton.move(140, 100)
-        self.okButton.setFixedSize(100, 40)
-        self.okButton.clicked.connect(self.close)
+        self.textLabel = customQLabel(self.defaultText, self, 85, 30, stylesheet=labelstyle(20, "white"))
+        self.okButton = customQPushButton("OK", self, 140, 100, 100, 40, buttonstyle(25, "white"), self.close)
 
     def open(self):
         self.textLabel.setText(self.defaultText)
@@ -48,8 +115,9 @@ class Window(QtGui.QMainWindow):
         self.setFixedSize(650, 700)
         self.setStyleSheet("background-color: black; border-color: 5 px solid white")
         self.setWindowTitle("IceBoard Fan Controller")
-        self.styles = styles()
         self.setWindowTitle("IceControl")
+        x, y = 40, 80
+        chanY, label_Y = 50, 100
 
         self.utilWindow = aboutWindow()
 
@@ -70,40 +138,26 @@ class Window(QtGui.QMainWindow):
         self.slider4 = QtGui.QSlider(1, self)
         self.slider5 = QtGui.QSlider(1, self)
         self.slider6 = QtGui.QSlider(1, self)
-        self.speed1 = QtGui.QLabel("100%", self)
-        self.speed2 = QtGui.QLabel("100%", self)
-        self.speed3 = QtGui.QLabel("100%", self)
-        self.speed4 = QtGui.QLabel("100%", self)
-        self.speed5 = QtGui.QLabel("100%", self)
-        self.speed6 = QtGui.QLabel("100%", self)
-
-        self.chan1 = QtGui.QLabel("Channel 1", self)
-        self.chan2 = QtGui.QLabel("Channel 2", self)
-        self.chan3 = QtGui.QLabel("Channel 3", self)
-        self.chan4 = QtGui.QLabel("Channel 4", self)
-        self.chan5 = QtGui.QLabel("Channel 5", self)
-        self.chan6 = QtGui.QLabel("Channel 6", self)
+        self.speed1 = customQLabel("100%", self, 560, label_Y)
+        self.speed2 = customQLabel("100%", self, 560, label_Y+100)
+        self.speed3 = customQLabel("100%", self, 560, label_Y+200)
+        self.speed4 = customQLabel("100%", self, 560, label_Y+300)
+        self.speed5 = customQLabel("100%", self, 560, label_Y+400)
+        self.speed6 = customQLabel("100%", self, 560, label_Y+500)
+        self.chan1 = customQLabel("Channel 1", self, 30, chanY, stylesheet="color: white; font-size 20px;")
+        self.chan2 = customQLabel("Channel 2", self, 30, chanY+100, stylesheet="color: white; font-size 20px;")
+        self.chan3 = customQLabel("Channel 3", self, 30, chanY+200, stylesheet="color: white; font-size 20px;")
+        self.chan4 = customQLabel("Channel 4", self, 30, chanY+300, stylesheet="color: white; font-size 20px;")
+        self.chan5 = customQLabel("Channel 5", self, 30, chanY+400, stylesheet="color: white; font-size 20px;")
+        self.chan6 = customQLabel("Channel 6", self, 30, chanY+500, stylesheet="color: white; font-size 20px;")
 
         self.sliderList = [self.slider1, self.slider2, self.slider3, self.slider4, self.slider5, self.slider6]
         self.speedList = [self.speed1, self.speed2, self.speed3, self.speed4, self.speed5, self.speed6]
         self.chanList = [self.chan1, self.chan2, self.chan3, self.chan4, self.chan5, self.chan6]
 
-        x, y = 40, 80
-        chanY, label_Y = 50, 100
-
-        for channel in self.chanList:
-            channel.setStyleSheet("color: white; font-size 20px;")
-            channel.move(30, chanY)
-            chanY+=100
-
-        for label in self.speedList:
-            label.setStyleSheet("color: white; font-size: 25px; font-style: italic")
-            label.move(560, label_Y)
-            label_Y+=100
-
         for slider in self.sliderList:
             slider.setFixedSize(500, 60)
-            slider.setStyleSheet(self.styles.stylesheet())
+            slider.setStyleSheet(slider_style())
             slider.setMinimum(10)
             slider.setMaximum(255)
             slider.move(x, y)
@@ -112,83 +166,20 @@ class Window(QtGui.QMainWindow):
 
         self.usbThread = usbThread(self)
 
-        self.tinklabel = QtGui.QLabel(".tink3r", self)
-        self.tinklabel.move(550, 670)
-        self.tinklabel.setStyleSheet("font-size: 15px; color:rgb(50,50,50); font-style: italic;")
+        self.tinklabel = customQLabel(".tink3r", self, 550, 670, stylesheet="font-size: 15px; color:rgb(50,50,50); font-style: italic;")
+        self.setMaxButton = customQPushButton("setMAX", self, 130, 10, stylesheet=buttonstyle(20, "white"), function=self.setMaxOnAllChannels)
+        self.setMinButton = customQPushButton("setMin", self, 20, 10, stylesheet=buttonstyle(20, "white"), function=self.setMinOnAllChannels)
+        self.updateButton = customQPushButton("Update Firmware", self, 100, 20, stylesheet=buttonstyle(25, "white"), function=self.updateFirmware)
+        self.temp1Label = customQLabel("TEMP1:", self, 380, 10, stylesheet=labelstyle(10, "white"))
+        self.temp2Label = customQLabel("TEMP2:", self, 480, 10, stylesheet=labelstyle(10, "white"))
+        self.temp3Label = customQLabel("TEMP3:", self, 580, 10, stylesheet=labelstyle(10, "white"))
+        self.temp1ValueLabel = customQLabel("  ", self, 400, 40, stylesheet=labelstyle(25, "white"))
+        self.temp2ValueLabel = customQLabel("  ", self, 500, 40, stylesheet=labelstyle(25, "white"))
+        self.temp3ValueLabel = customQLabel("  ", self, 600, 40, stylesheet=labelstyle(25, "white"))
+        self.label = customQLabel("", self, 30, 650, 20, 20, "background-color: red; border-radius: 8px;")
+        self.status_label = customQLabel("IceBoard Disconnected", self, 60, 650, 200, 30, "color: white;")
 
-        self.setMaxButton = QtGui.QPushButton("setMAX", self)
-        self.setMaxButton.setStyleSheet(self.styles.buttonstyle(20, "white"))
-        self.setMaxButton.clicked.connect(self.setMaxOnAllChannels)
-        self.setMaxButton.move(130, 10)
-
-        self.setMinButton = QtGui.QPushButton("setMin", self)
-        self.setMinButton.setStyleSheet(self.styles.buttonstyle(20, "white"))
-        self.setMinButton.clicked.connect(self.setMinOnAllChannels)
-        self.setMinButton.move(20, 10)
-
-        # self.check1 = QtGui.QCheckBox("", self)
-        # self.check1.move(20, 100)
-        # self.check1.setFixedSize(20, 20)
-        #
-        # self.check2 = QtGui.QCheckBox("", self)
-        # self.check2.move(20, 200)
-        # self.check2.setFixedSize(20, 20)
-        #
-        # self.check3 = QtGui.QCheckBox("", self)
-        # self.check3.move(20, 300)
-        # self.check3.setFixedSize(20, 20)
-        #
-        # self.check4 = QtGui.QCheckBox("", self)
-        # self.check4.move(20, 400)
-        # self.check4.setFixedSize(20, 20)
-        #
-        # self.check5 = QtGui.QCheckBox("", self)
-        # self.check5.move(20, 500)
-        # self.check5.setFixedSize(20, 20)
-        #
-        # self.check6 = QtGui.QCheckBox("", self)
-        # self.check6.move(20, 600)
-        # self.check6.setFixedSize(20, 20)
-
-        self.updateButton = QtGui.QPushButton("Update Firmware", self)
-        self.updateButton.setStyleSheet(self.styles.buttonstyle(25, "white"))
-        self.updateButton.move(100, 20)
-        self.updateButton.clicked.connect(self.updateFirmware)
         self.updateButton.hide()
-
-        self.temp1Label = QtGui.QLabel("TEMP1:", self)
-        self.temp1Label.setStyleSheet(self.styles.labelstyle(10, "white"))
-        self.temp1Label.move(380, 10)
-
-        self.temp2Label = QtGui.QLabel("TEMP2:", self)
-        self.temp2Label.setStyleSheet(self.styles.labelstyle(10, "white"))
-        self.temp2Label.move(480, 10)
-
-        self.temp3Label = QtGui.QLabel("TEMP3:", self)
-        self.temp3Label.setStyleSheet(self.styles.labelstyle(10, "white"))
-        self.temp3Label.move(580, 10)
-
-        self.temp1ValueLabel = QtGui.QLabel("  ", self)
-        self.temp1ValueLabel.setStyleSheet(self.styles.labelstyle(25, "white"))
-        self.temp1ValueLabel.move(400, 40)
-
-        self.temp2ValueLabel = QtGui.QLabel("  ", self)
-        self.temp2ValueLabel.setStyleSheet(self.styles.labelstyle(25, "white"))
-        self.temp2ValueLabel.move(500, 40)
-
-        self.temp3ValueLabel = QtGui.QLabel("  ", self)
-        self.temp3ValueLabel.setStyleSheet(self.styles.labelstyle(25, "white"))
-        self.temp3ValueLabel.move(600, 40)
-
-        self.label = QtGui.QLabel("", self)
-        self.label.setFixedSize(20, 20)
-        self.label.setStyleSheet("background-color: red; border-radius: 8px;")
-        self.label.move(30, 650)
-
-        self.status_label = QtGui.QLabel("IceBoard Disconnected", self)
-        self.status_label.setStyleSheet("color: white;")
-        self.status_label.setFixedSize(200, 30)
-        self.status_label.move(60, 650)
 
         self.usbThread.start()
 
@@ -415,65 +406,6 @@ class usbThread(QThread):
         if len(command) <= 4:
             self.serial.write(str(command)+"\n")
 
-class styles():
-
-    def __init__(self):
-        self.styles_imported = 1
-
-    def stylesheet(self):
-        return """
-                QSlider::groove:horizontal {
-                    height: 50px;
-                    border: 0px solid #abc;
-                    }
-                QSlider::sub-page:horizontal {
-                    background: qlineargradient(x1: 0, y1: 0,    x2: 0, y2: 1,
-                        stop: 0 #333, stop: 1 #aaa);
-                    background: qlineargradient(x1: 0, y1: 0.2, x2: 1, y2: 1,
-                        stop: 0 #333, stop: 1 #aaa);
-                    height: 40px;
-                }
-                QSlider::add-page:horizontal {
-                    background: #222;
-                    border: 2px solid gray;
-                    height: 40px;
-                }
-                QSlider::handle:horizontal {
-                    background: #000;
-                    width: 20px;
-                    border: 2px solid white;
-                    margin-top: 0px;
-                    margin-bottom: 0px;
-                    border-radius: 8px;
-                }
-            """
-
-    def buttonstyle(self, size, color):
-        return """
-                QPushButton {
-                    color:"""+str(color)+""";
-                    background-color: rgb(50, 50, 50);
-                    border-style: solid;
-                    border-width: 2px;
-                    border-radius: 5px;
-                    border-color: white;
-                    font:"""+str(size)+"""px;
-                    font-style: italic;
-                }
-                QPushButton::pressed {
-                    background-color: rgb(200, 200, 200);
-                    border-style: inset;
-                }
-            """
-
-    def labelstyle(self, size, color):
-        return """
-                QLabel {
-                    color:"""+str(color)+""";
-                    background-color: rgb(0, 0, 0);
-                    font:"""+str(size)+"""px;
-                }
-            """
 
 app = QtGui.QApplication(sys.argv)
 window = Window()
