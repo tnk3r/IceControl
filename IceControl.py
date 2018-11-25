@@ -87,7 +87,7 @@ class aboutWindow(QtGui.QWidget):
         self.setFixedSize(400, 150)
         self.move(600, 300)
         self.setStyleSheet("background-color: black; border-color: 5 px solid white")
-        self.defaultText = "\tIceControl Version .75\n\n\t  tink3r (AlexCarr)"
+        self.defaultText = "\tIceControl Version .80\n\n\t  tink3r"
         self.textLabel = customQLabel(self.defaultText, self, 85, 30, stylesheet=labelstyle(20, "white"))
         self.okButton = customQPushButton("OK", self, 140, 100, 100, 40, buttonstyle(25, "white"), self.close)
 
@@ -307,11 +307,13 @@ class usbThread(QThread):
         QThread.__init__(self, parent=None)
         self.name = "NanoThread"
         self.version = 180
-        self.board_connected = 0
+
+        self.board_connected = False
         self.sliderSignals = [self.slider1, self.slider2, self.slider3, self.slider4, self.slider5, self.slider6]
         self.values = [self.value1, self.value2, self.value3, self.value4, self.value5, self.value6]
 
     def serial_setup(self):
+        serial_address = ""
         #need to test on Windows 10
         if platform.system() == "Cygwin":
             self.status_message.emit("No Ice Board Connected")
@@ -321,7 +323,7 @@ class usbThread(QThread):
                 for device in os.listdir('/dev/'):
                     if "ttyUSB" in device:
                         serial_address = "/dev/"+str(device)
-                        self.board_connected = 1
+                        self.board_connected = True
                         self.status.emit("background-color: lime; border-radius: 8px;")
             except StandardError as msg:
                 self.status.emit("background-color: red; border-radius: 8px;")
@@ -335,9 +337,13 @@ class usbThread(QThread):
                 for device in os.listdir('/dev/'):
                     if "wchusbserial" in device:
                         serial_address = "/dev/"+str(device)
-                        self.board_connected = 1
+                        self.board_connected = True
                         x +=1
-                if x > 0:
+                    if 'usbserial' in device:
+                        serial_address = "/dev/"+str(device)
+                        self.board_connected = True
+                        x +=1
+                if self.board_connected:
                     self.status.emit("background-color: lime; border-radius: 8px;")
             except StandardError as msg:
                 print "no iceboard :("+str(msg)
@@ -348,14 +354,14 @@ class usbThread(QThread):
                 self.serial = serial.Serial(serial_address, 9600)
         except StandardError as msg:
             print str(msg)
-            self.board_connected = 0
+            self.board_connected = False
             self.status.emit("background-color: red; border-radius: 8px")
-            self.status_message.emit("No Ice Board Connected")
+            self.status_message.emit("No Ice Board Connected :(")
             time.sleep(2)
 
     def run(self):
         while True:
-            if int(self.board_connected) == 1:
+            if self.board_connected:
                 try:
                     self.parseData()
                     self.status.emit("background-color: lime; border-radius: 8;")
@@ -363,9 +369,9 @@ class usbThread(QThread):
                     print str(msg)
                     self.status.emit("background-color: red; border-radius: 8;")
                     self.status_message.emit("No Ice Board Connected")
-                    self.board_connected = 0
+                    self.board_connected = False
             else:
-                self.serial_setup()
+                break
             time.sleep(0.2)
 
     def parseData(self):
